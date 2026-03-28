@@ -161,7 +161,7 @@ mod tests {
 
     #[test]
     fn merged_partition_results_match_sequential_replay() {
-        use crate::{CaseSeed, classify, mutate_seed};
+        use crate::{classify, mutate_seed, CaseSeed};
 
         let total = 40u64;
         let n = 5u32;

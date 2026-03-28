@@ -4,13 +4,13 @@
 //! gzip so long campaigns store significantly less data on disk while keeping
 //! artifacts fully reproducible (decompress → load → verify signature).
 
-use flate2::Compression;
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
+use flate2::Compression;
 use std::io::{Read, Write};
 
-use crate::{CaseBundle, BundlePersistError, save_case_bundle_json};
 use crate::bundle_persist::load_case_bundle_json;
+use crate::{save_case_bundle_json, BundlePersistError, CaseBundle};
 
 /// Compresses `bundle` to gzip-wrapped JSON bytes.
 ///
@@ -35,10 +35,13 @@ pub fn decompress_artifact(compressed: &[u8]) -> Result<CaseBundle, BundlePersis
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CaseSeed, to_bundle, to_bundle_with_environment};
+    use crate::{to_bundle, to_bundle_with_environment, CaseSeed};
 
     fn sample_bundle() -> CaseBundle {
-        let mut b = to_bundle(CaseSeed { id: 42, payload: vec![1, 2, 3, 4, 5, 6, 7, 8] });
+        let mut b = to_bundle(CaseSeed {
+            id: 42,
+            payload: vec![1, 2, 3, 4, 5, 6, 7, 8],
+        });
         b.failure_payload = b"panic: contract trap at ledger 99".to_vec();
         b
     }
@@ -74,7 +77,10 @@ mod tests {
 
     #[test]
     fn roundtrip_with_environment_fingerprint() {
-        let bundle = to_bundle_with_environment(CaseSeed { id: 7, payload: vec![9, 8, 7] });
+        let bundle = to_bundle_with_environment(CaseSeed {
+            id: 7,
+            payload: vec![9, 8, 7],
+        });
         let compressed = compress_artifact(&bundle).expect("compress");
         let restored = decompress_artifact(&compressed).expect("decompress");
         assert_eq!(restored.environment, bundle.environment);

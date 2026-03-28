@@ -161,7 +161,11 @@ mod tests {
     #[test]
     fn prioritize_indices_is_stable_under_ties_by_seed_id() {
         let p = NoveltyPrioritizer::new();
-        let c = vec![candidate(3, 10, None), candidate(1, 11, None), candidate(2, 12, None)];
+        let c = vec![
+            candidate(3, 10, None),
+            candidate(1, 11, None),
+            candidate(2, 12, None),
+        ];
         let idx = p.prioritize_indices(&c);
         let ordered_ids: Vec<u64> = idx.into_iter().map(|i| c[i].seed.id).collect();
         assert_eq!(ordered_ids, vec![1, 2, 3]);

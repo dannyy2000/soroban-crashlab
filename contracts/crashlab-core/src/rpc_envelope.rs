@@ -100,7 +100,11 @@ impl RpcResponseEnvelope {
     }
 
     /// Creates a new response envelope without redaction (use with caution).
-    pub fn new_unsanitized(status: impl Into<String>, result: Option<Value>, error: Option<Value>) -> Self {
+    pub fn new_unsanitized(
+        status: impl Into<String>,
+        result: Option<Value>,
+        error: Option<Value>,
+    ) -> Self {
         Self {
             status: status.into(),
             result,
@@ -179,7 +183,10 @@ fn redact_sensitive_fields(value: &Value, path: &str, redacted: &mut Vec<String>
                     redacted.push(current_path);
                     new_map.insert(key.clone(), Value::String("[REDACTED]".to_string()));
                 } else {
-                    new_map.insert(key.clone(), redact_sensitive_fields(val, &current_path, redacted));
+                    new_map.insert(
+                        key.clone(),
+                        redact_sensitive_fields(val, &current_path, redacted),
+                    );
                 }
             }
             Value::Object(new_map)
@@ -202,7 +209,9 @@ fn redact_sensitive_fields(value: &Value, path: &str, redacted: &mut Vec<String>
 /// Checks if a field name matches any sensitive pattern (case-insensitive).
 fn is_sensitive_field(field_name: &str) -> bool {
     let lower = field_name.to_lowercase();
-    SENSITIVE_PATTERNS.iter().any(|pattern| lower.contains(pattern))
+    SENSITIVE_PATTERNS
+        .iter()
+        .any(|pattern| lower.contains(pattern))
 }
 
 #[cfg(test)]
@@ -219,13 +228,12 @@ mod tests {
         let envelope = RpcRequestEnvelope::new("submitTransaction", params);
 
         assert_eq!(envelope.method, "submitTransaction");
-        assert_eq!(
-            envelope.params["authorization"],
-            "[REDACTED]"
-        );
+        assert_eq!(envelope.params["authorization"], "[REDACTED]");
         assert_eq!(envelope.params["account"], "GABC123");
         assert_eq!(envelope.params["amount"], 100);
-        assert!(envelope.redacted_fields.contains(&"authorization".to_string()));
+        assert!(envelope
+            .redacted_fields
+            .contains(&"authorization".to_string()));
     }
 
     #[test]
@@ -244,15 +252,14 @@ mod tests {
         });
         let envelope = RpcRequestEnvelope::new("simulateTransaction", params);
 
-        assert_eq!(
-            envelope.params["transaction"]["signature"],
-            "[REDACTED]"
-        );
+        assert_eq!(envelope.params["transaction"]["signature"], "[REDACTED]");
         assert_eq!(
             envelope.params["transaction"]["operations"][0]["secretKey"],
             "[REDACTED]"
         );
-        assert!(envelope.redacted_fields.contains(&"transaction.signature".to_string()));
+        assert!(envelope
+            .redacted_fields
+            .contains(&"transaction.signature".to_string()));
         assert!(envelope
             .redacted_fields
             .contains(&"transaction.operations[0].secretKey".to_string()));
@@ -303,17 +310,11 @@ mod tests {
 
     #[test]
     fn envelope_capture_tracks_redactions() {
-        let request = RpcRequestEnvelope::new(
-            "submit",
-            serde_json::json!({ "auth": "secret" }),
-        );
+        let request = RpcRequestEnvelope::new("submit", serde_json::json!({ "auth": "secret" }));
         let response = RpcResponseEnvelope::success(serde_json::json!({ "result": "ok" }));
 
-        let capture = RpcEnvelopeCapture::new_with_timestamp(
-            request,
-            response,
-            "2024-01-01T00:00:00Z",
-        );
+        let capture =
+            RpcEnvelopeCapture::new_with_timestamp(request, response, "2024-01-01T00:00:00Z");
 
         assert!(capture.has_redactions());
         assert_eq!(capture.all_redacted_fields().len(), 1);
@@ -332,11 +333,8 @@ mod tests {
             None,
         );
 
-        let capture = RpcEnvelopeCapture::new_with_timestamp(
-            request,
-            response,
-            "2024-01-01T00:00:00Z",
-        );
+        let capture =
+            RpcEnvelopeCapture::new_with_timestamp(request, response, "2024-01-01T00:00:00Z");
 
         assert!(!capture.has_redactions());
         assert!(capture.all_redacted_fields().is_empty());
@@ -372,16 +370,14 @@ mod tests {
         });
         let envelope = RpcRequestEnvelope::new("batchSubmit", params);
 
-        assert_eq!(
-            envelope.params["operations"][0]["secret"],
-            "[REDACTED]"
-        );
-        assert_eq!(
-            envelope.params["operations"][1]["secret"],
-            "[REDACTED]"
-        );
-        assert!(envelope.redacted_fields.contains(&"operations[0].secret".to_string()));
-        assert!(envelope.redacted_fields.contains(&"operations[1].secret".to_string()));
+        assert_eq!(envelope.params["operations"][0]["secret"], "[REDACTED]");
+        assert_eq!(envelope.params["operations"][1]["secret"], "[REDACTED]");
+        assert!(envelope
+            .redacted_fields
+            .contains(&"operations[0].secret".to_string()));
+        assert!(envelope
+            .redacted_fields
+            .contains(&"operations[1].secret".to_string()));
     }
 
     #[test]
@@ -391,16 +387,14 @@ mod tests {
             serde_json::json!({ "password": "hunter2", "user": "alice" }),
         );
         let response = RpcResponseEnvelope::success(serde_json::json!({ "id": 1 }));
-        let capture = RpcEnvelopeCapture::new_with_timestamp(request, response, "2024-03-15T10:30:00Z");
+        let capture =
+            RpcEnvelopeCapture::new_with_timestamp(request, response, "2024-03-15T10:30:00Z");
 
         let json = serde_json::to_string(&capture).unwrap();
         let deserialized: RpcEnvelopeCapture = serde_json::from_str(&json).unwrap();
 
         assert_eq!(capture, deserialized);
         assert!(deserialized.has_redactions());
-        assert_eq!(
-            deserialized.request.params["password"],
-            "[REDACTED]"
-        );
+        assert_eq!(deserialized.request.params["password"], "[REDACTED]");
     }
 }

@@ -4,9 +4,9 @@
 //! Grouped suites emit one Rust submodule per group so `cargo test <suite>::<group>` runs only
 //! that slice — see [`export_rust_regression_suite`].
 
-use crate::CaseBundle;
 use crate::scenario_export::format_rust_regression_test_fn;
-use crate::taxonomy::{FailureClass, classify_failure};
+use crate::taxonomy::{classify_failure, FailureClass};
+use crate::CaseBundle;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
@@ -130,7 +130,10 @@ fn default_test_name(bundle: &CaseBundle) -> String {
 ///
 /// Run one group: `cargo test my_contract_regression::regression_auth_runtime_failure`
 /// (from a crate that includes this snippet under `tests/` or `src/…`).
-pub fn export_rust_regression_suite(root_module: &str, bundles: &[CaseBundle]) -> Result<String, String> {
+pub fn export_rust_regression_suite(
+    root_module: &str,
+    bundles: &[CaseBundle],
+) -> Result<String, String> {
     if !is_valid_rust_ident(root_module) {
         return Err(
             "invalid root module name: must be a Rust identifier (a-z, A-Z, 0-9, _)".into(),
@@ -205,7 +208,7 @@ fn is_valid_rust_ident(name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CaseBundle, CaseSeed, classify, to_bundle};
+    use crate::{classify, to_bundle, CaseBundle, CaseSeed};
 
     #[test]
     fn key_orders_domain_then_mode() {

@@ -216,7 +216,7 @@ pub fn export_rust_regression_fixture(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CaseSeed, to_bundle};
+    use crate::{to_bundle, CaseSeed};
 
     #[test]
     fn scenario_contains_all_required_fields() {
@@ -243,12 +243,10 @@ mod tests {
         let scenario = FailureScenario::from_bundle(&bundle, "contract");
 
         // After mutation, payload will be different, but should still be valid hex
-        assert!(
-            scenario
-                .input_payload
-                .chars()
-                .all(|c| c.is_ascii_hexdigit())
-        );
+        assert!(scenario
+            .input_payload
+            .chars()
+            .all(|c| c.is_ascii_hexdigit()));
         assert_eq!(scenario.input_payload.len() % 2, 0); // Even length for hex
     }
 

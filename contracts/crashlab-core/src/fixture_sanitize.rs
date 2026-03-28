@@ -3,9 +3,9 @@
 //! Public fixtures should keep enough structure to reproduce a failure class
 //! without copying obvious credentials or session material into issue trackers.
 
-use crate::bundle_persist::{BundlePersistError, CASE_BUNDLE_SCHEMA_VERSION, CaseBundleDocument};
+use crate::bundle_persist::{BundlePersistError, CaseBundleDocument, CASE_BUNDLE_SCHEMA_VERSION};
 use crate::scenario_export::FailureScenario;
-use crate::{CaseBundle, CaseSeed, classify};
+use crate::{classify, CaseBundle, CaseSeed};
 
 const SENSITIVE_KEYS: &[&[u8]] = &[
     b"authorization",
@@ -313,7 +313,10 @@ mod tests {
         let sanitized_bundle = sanitize_bundle_for_sharing(&bundle);
         let scenario = sanitized_failure_scenario(&bundle, "public");
 
-        assert_eq!(sanitized_bundle.seed.payload.len(), bundle.seed.payload.len());
+        assert_eq!(
+            sanitized_bundle.seed.payload.len(),
+            bundle.seed.payload.len()
+        );
         assert_eq!(
             sanitized_bundle.failure_payload.len(),
             bundle.failure_payload.len()

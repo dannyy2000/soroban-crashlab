@@ -1,5 +1,5 @@
-use crate::CaseSeed;
 use crate::is_invalid_enum_tag_payload;
+use crate::CaseSeed;
 use std::collections::HashMap;
 
 /// Stable failure categories for Soroban contract crashes.

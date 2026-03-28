@@ -8,8 +8,8 @@
 //! The mutator supports toggling between valid and invalid address generation
 //! to test both parsing success and error handling paths.
 
-use crate::CaseSeed;
 use crate::scheduler::Mutator;
+use crate::CaseSeed;
 
 /// Stellar address type variants.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -135,11 +135,7 @@ impl Mutator for StellarAddressMutator {
 }
 
 /// Generate a Stellar address based on seed and RNG state.
-fn generate_address(
-    seed: &CaseSeed,
-    rng_state: &mut u64,
-    config: &AddressMutatorConfig,
-) -> String {
+fn generate_address(seed: &CaseSeed, rng_state: &mut u64, config: &AddressMutatorConfig) -> String {
     advance_rng(rng_state);
 
     // Select address type based on RNG
@@ -365,7 +361,14 @@ pub fn generate_address_vectors(base_id: u64, config: &AddressMutatorConfig) -> 
     // Generate at least one of each address type
     for addr_type in AddressType::ALL {
         // Valid address
-        let valid_addr = generate_valid_address(addr_type, &CaseSeed { id: 0, payload: vec![] }, &mut rng);
+        let valid_addr = generate_valid_address(
+            addr_type,
+            &CaseSeed {
+                id: 0,
+                payload: vec![],
+            },
+            &mut rng,
+        );
         seeds.push(CaseSeed {
             id,
             payload: valid_addr.into_bytes(),
@@ -377,7 +380,10 @@ pub fn generate_address_vectors(base_id: u64, config: &AddressMutatorConfig) -> 
             for _ in 0..2 {
                 let invalid_addr = generate_invalid_address(
                     addr_type,
-                    &CaseSeed { id: 0, payload: vec![] },
+                    &CaseSeed {
+                        id: 0,
+                        payload: vec![],
+                    },
                     &mut rng,
                 );
                 seeds.push(CaseSeed {
@@ -398,7 +404,10 @@ mod tests {
 
     #[test]
     fn mutator_name() {
-        assert_eq!(StellarAddressMutator::default_mutator().name(), "stellar-address");
+        assert_eq!(
+            StellarAddressMutator::default_mutator().name(),
+            "stellar-address"
+        );
     }
 
     #[test]
@@ -453,13 +462,19 @@ mod tests {
                 break;
             }
         }
-        assert!(found_invalid, "Expected to find at least one invalid address");
+        assert!(
+            found_invalid,
+            "Expected to find at least one invalid address"
+        );
     }
 
     #[test]
     fn account_address_starts_with_g() {
         let addr = generate_valid_account_address(
-            &CaseSeed { id: 1, payload: vec![] },
+            &CaseSeed {
+                id: 1,
+                payload: vec![],
+            },
             &mut 42u64,
         );
         assert!(addr.starts_with('G'));
@@ -469,7 +484,10 @@ mod tests {
     #[test]
     fn contract_address_starts_with_c() {
         let addr = generate_valid_contract_address(
-            &CaseSeed { id: 1, payload: vec![] },
+            &CaseSeed {
+                id: 1,
+                payload: vec![],
+            },
             &mut 42u64,
         );
         assert!(addr.starts_with('C'));
@@ -479,7 +497,10 @@ mod tests {
     #[test]
     fn muxed_address_starts_with_m() {
         let addr = generate_valid_muxed_address(
-            &CaseSeed { id: 1, payload: vec![] },
+            &CaseSeed {
+                id: 1,
+                payload: vec![],
+            },
             &mut 42u64,
         );
         assert!(addr.starts_with('M'));

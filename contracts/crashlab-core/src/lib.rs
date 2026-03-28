@@ -2,18 +2,20 @@ pub mod auth_matrix;
 pub mod health;
 pub mod prng;
 pub mod reproducer;
+pub mod retry;
 pub mod taxonomy;
 
-pub use auth_matrix::{AuthMode, MatrixReport, ModeResult, collect_mismatched, run_matrix};
+pub use auth_matrix::{collect_mismatched, run_matrix, AuthMode, MatrixReport, ModeResult};
 pub use health::{
     FailureMetrics, HealthMonitor, HealthStatus, HealthSummary, QueueMetrics, ThroughputMetrics,
 };
 pub use prng::SeededPrng;
 pub use reproducer::{
-    FlakyDetector, ReproReport, filter_ci_pack, shrink_bundle_payload,
-    shrink_seed_preserving_signature,
+    filter_ci_pack, shrink_bundle_payload, shrink_seed_preserving_signature, FlakyDetector,
+    ReproReport,
 };
-pub use taxonomy::{FailureClass, classify_failure, group_by_class};
+pub use retry::{execute_with_retry, RetryConfig, SimulationError};
+pub use taxonomy::{classify_failure, group_by_class, FailureClass};
 
 pub mod seed_validator;
 pub use seed_validator::{SeedSchema, SeedValidationError, Validate};
@@ -24,36 +26,36 @@ pub use scheduler::{Mutator, SchedulerError, WeightedScheduler};
 pub mod campaign_presets;
 pub use campaign_presets::{CampaignParameters, CampaignPreset, ParseCampaignPresetError};
 pub mod replay;
-pub use replay::{ReplayResult, replay_seed_bundle};
+pub use replay::{replay_seed_bundle, ReplayResult};
 
 pub mod env_fingerprint;
 pub use env_fingerprint::{
-    EnvironmentFingerprint, ReplayEnvironmentReport, check_bundle_replay_environment,
-    check_replay_environment,
+    check_bundle_replay_environment, check_replay_environment, EnvironmentFingerprint,
+    ReplayEnvironmentReport,
 };
 pub mod boundary;
-pub use boundary::{BoundaryMutator, generate_boundary_vectors};
+pub use boundary::{generate_boundary_vectors, BoundaryMutator};
 
 pub mod enum_flip;
-pub use enum_flip::{EnumVariantFlipMutator, is_invalid_enum_tag_payload};
+pub use enum_flip::{is_invalid_enum_tag_payload, EnumVariantFlipMutator};
 
 pub mod decimal_precision;
 pub use decimal_precision::{
-    DecimalBoundaryCase, DecimalPrecisionMutator, decimal_boundary_cases,
-    generate_decimal_precision_vectors,
+    decimal_boundary_cases, generate_decimal_precision_vectors, DecimalBoundaryCase,
+    DecimalPrecisionMutator,
 };
 
 pub mod bundle_persist;
 pub use bundle_persist::{
-    BundlePersistError, CASE_BUNDLE_SCHEMA_VERSION, CaseBundleDocument, SUPPORTED_BUNDLE_SCHEMAS,
-    read_case_bundle_json, save_case_bundle_json, write_case_bundle_json,
+    read_case_bundle_json, save_case_bundle_json, write_case_bundle_json, BundlePersistError,
+    CaseBundleDocument, CASE_BUNDLE_SCHEMA_VERSION, SUPPORTED_BUNDLE_SCHEMAS,
 };
 
 pub mod artifact_compress;
 pub use artifact_compress::{compress_artifact, decompress_artifact};
 
 pub mod fixture_compat;
-pub use fixture_compat::{CompatReport, CompatWarning, check_bundle_fixtures, check_seed_fixtures};
+pub use fixture_compat::{check_bundle_fixtures, check_seed_fixtures, CompatReport, CompatWarning};
 
 pub mod fixture_sanitize;
 pub use fixture_sanitize::{
@@ -64,14 +66,14 @@ pub use fixture_sanitize::{
 
 pub mod checkpoint;
 pub use checkpoint::{
-    CheckpointError, RUN_CHECKPOINT_SCHEMA_VERSION, RunCheckpoint, load_run_checkpoint_json,
-    save_run_checkpoint_json,
+    load_run_checkpoint_json, save_run_checkpoint_json, CheckpointError, RunCheckpoint,
+    RUN_CHECKPOINT_SCHEMA_VERSION,
 };
 
 pub mod corpus;
 pub use corpus::{
-    CORPUS_ARCHIVE_SCHEMA_VERSION, CorpusArchive, CorpusError, corpus_archive_from_seeds,
-    export_corpus_json, import_corpus_json,
+    corpus_archive_from_seeds, export_corpus_json, import_corpus_json, CorpusArchive, CorpusError,
+    CORPUS_ARCHIVE_SCHEMA_VERSION,
 };
 
 pub mod retention;
@@ -79,32 +81,32 @@ pub use retention::RetentionPolicy;
 
 pub mod scenario_export;
 pub use scenario_export::{
-    FailureScenario, export_crash_report_markdown, export_rust_regression_fixture,
-    export_scenario_json, export_suite_json,
+    export_crash_report_markdown, export_rust_regression_fixture, export_scenario_json,
+    export_suite_json, FailureScenario,
 };
 
 pub mod regression_suite;
 pub use regression_suite::{
-    RegressionCaseResult, RegressionSuiteSummary, load_regression_suite_json,
-    run_regression_suite, run_regression_suite_from_json,
+    load_regression_suite_json, run_regression_suite, run_regression_suite_from_json,
+    RegressionCaseResult, RegressionSuiteSummary,
 };
 
 pub mod regression_grouping;
 pub use regression_grouping::{
-    RegressionGroupKey, export_rust_regression_suite, group_bundles_by_regression_group,
-    regression_group_key, regression_group_keys_sorted, regression_group_module_ident,
+    export_rust_regression_suite, group_bundles_by_regression_group, regression_group_key,
+    regression_group_keys_sorted, regression_group_module_ident, RegressionGroupKey,
 };
 
 pub mod simulation;
 pub use simulation::{
-    RunMetadata, RunMetadataError, SimulationTimeoutConfig, load_run_metadata_json,
-    run_simulation_with_timeout, save_run_metadata_json, timeout_crash_signature,
+    load_run_metadata_json, run_simulation_with_timeout, save_run_metadata_json,
+    timeout_crash_signature, RunMetadata, RunMetadataError, SimulationTimeoutConfig,
     RUN_METADATA_SCHEMA_VERSION, SUPPORTED_RUN_METADATA_SCHEMAS,
 };
 
 pub mod container_stress;
 pub use container_stress::{
-    ContainerStressConfig, ContainerStressMutator, generate_container_stress_grid,
+    generate_container_stress_grid, ContainerStressConfig, ContainerStressMutator,
 };
 
 pub mod crash_index;
@@ -115,18 +117,18 @@ pub use mutation_budget::{BudgetReport, MutationBudget};
 
 pub mod seed_novelty;
 pub use seed_novelty::{
-    DiscoveryBenchmark, NoveltyPrioritizer, SeedNoveltyCandidate, benchmark_novelty_discovery,
+    benchmark_novelty_discovery, DiscoveryBenchmark, NoveltyPrioritizer, SeedNoveltyCandidate,
 };
 pub mod stale_detector;
 pub use stale_detector::{StaleDetectorConfig, StaleRunDetector, StaleStatus};
 
 pub mod worker_partition;
-pub use worker_partition::{WorkerPartition, WorkerPartitionError, worker_for_seed};
+pub use worker_partition::{worker_for_seed, WorkerPartition, WorkerPartitionError};
 
 pub mod run_control;
 pub use run_control::{
-    CancelSignal, RunId, RunSummary, RunTerminalState, cancel_marker_path, cancel_requested,
-    clear_cancel_request, default_state_dir, drive_run, drive_run_partitioned, request_cancel_run,
+    cancel_marker_path, cancel_requested, clear_cancel_request, default_state_dir, drive_run,
+    drive_run_partitioned, request_cancel_run, CancelSignal, RunId, RunSummary, RunTerminalState,
 };
 
 pub mod rpc_envelope;
@@ -134,7 +136,7 @@ pub use rpc_envelope::{RpcEnvelopeCapture, RpcRequestEnvelope, RpcResponseEnvelo
 
 pub mod stellar_address;
 pub use stellar_address::{
-    AddressMutatorConfig, AddressType, StellarAddressMutator, generate_address_vectors,
+    generate_address_vectors, AddressMutatorConfig, AddressType, StellarAddressMutator,
 };
 
 /// Wrapper for the legacy bit-flipper mutation logic.

@@ -2,7 +2,7 @@
 //! and evaluate each [`FailureScenario`] by re-classifying the seed payload.
 
 use crate::scenario_export::FailureScenario;
-use crate::{CaseSeed, classify};
+use crate::{classify, CaseSeed};
 
 /// Outcome for one scenario row after replay.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -60,7 +60,9 @@ pub fn run_regression_suite(scenarios: &[FailureScenario]) -> RegressionSuiteSum
 }
 
 /// Loads JSON then runs [`run_regression_suite`].
-pub fn run_regression_suite_from_json(bytes: &[u8]) -> Result<RegressionSuiteSummary, serde_json::Error> {
+pub fn run_regression_suite_from_json(
+    bytes: &[u8],
+) -> Result<RegressionSuiteSummary, serde_json::Error> {
     let scenarios = load_regression_suite_json(bytes)?;
     Ok(run_regression_suite(&scenarios))
 }
@@ -100,7 +102,7 @@ fn evaluate_scenario(s: &FailureScenario) -> RegressionCaseResult {
 mod tests {
     use super::*;
     use crate::scenario_export::export_suite_json;
-    use crate::{CaseSeed, to_bundle};
+    use crate::{to_bundle, CaseSeed};
 
     #[test]
     fn exported_suite_round_trips_and_all_pass() {

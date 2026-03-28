@@ -7,7 +7,7 @@
 //! [`RunMetadata`] is versioned for JSON persistence; use [`load_run_metadata_json`] /
 //! [`save_run_metadata_json`] so older on-disk shapes are accepted and upgraded.
 
-use crate::{CaseSeed, CrashSignature, compute_signature_hash};
+use crate::{compute_signature_hash, CaseSeed, CrashSignature};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::sync::mpsc;
@@ -100,9 +100,7 @@ impl From<serde_json::Error> for RunMetadataError {
 
 fn validate_and_upgrade_run_metadata(meta: RunMetadata) -> Result<RunMetadata, RunMetadataError> {
     if !SUPPORTED_RUN_METADATA_SCHEMAS.contains(&meta.schema) {
-        return Err(RunMetadataError::UnsupportedSchema {
-            found: meta.schema,
-        });
+        return Err(RunMetadataError::UnsupportedSchema { found: meta.schema });
     }
 
     let mut m = meta;
@@ -114,9 +112,7 @@ fn validate_and_upgrade_run_metadata(meta: RunMetadata) -> Result<RunMetadata, R
                 simulation_timeout_ms: m.simulation_timeout_ms,
             },
             _ => {
-                return Err(RunMetadataError::UnsupportedSchema {
-                    found: m.schema,
-                });
+                return Err(RunMetadataError::UnsupportedSchema { found: m.schema });
             }
         };
     }
@@ -139,11 +135,9 @@ pub fn save_run_metadata_json(meta: &RunMetadata) -> Result<Vec<u8>, RunMetadata
 /// Builds the crash signature used when a simulation hits the timeout wall.
 pub fn timeout_crash_signature(seed: &CaseSeed) -> CrashSignature {
     let category = "timeout";
-    let digest = seed
-        .payload
-        .iter()
-        .fold(seed.id, |acc, b| acc.wrapping_mul(1099511628211).wrapping_add(*b as u64))
-        ^ 0x7F4A_7C15_4E3F_4E3Fu64;
+    let digest = seed.payload.iter().fold(seed.id, |acc, b| {
+        acc.wrapping_mul(1099511628211).wrapping_add(*b as u64)
+    }) ^ 0x7F4A_7C15_4E3F_4E3Fu64;
     let signature_hash = compute_signature_hash(category, &seed.payload);
     CrashSignature {
         category: category.to_string(),

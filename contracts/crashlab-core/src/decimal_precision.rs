@@ -1,7 +1,7 @@
 //! Decimal precision/scale mutator for token-math boundary fuzzing.
 
-use crate::CaseSeed;
 use crate::scheduler::Mutator;
+use crate::CaseSeed;
 
 const DECIMAL_MARKER: u8 = 0xD3;
 

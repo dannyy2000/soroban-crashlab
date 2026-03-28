@@ -78,7 +78,10 @@ mod tests {
         let bundles = vec![
             CaseBundleDocument {
                 schema: 1,
-                seed: CaseSeed { id: 1, payload: vec![1] },
+                seed: CaseSeed {
+                    id: 1,
+                    payload: vec![1],
+                },
                 signature: CrashSignature {
                     category: FailureClass::Auth.to_string(),
                     digest: 1,
@@ -90,7 +93,10 @@ mod tests {
             },
             CaseBundleDocument {
                 schema: 1,
-                seed: CaseSeed { id: 3, payload: vec![3] },
+                seed: CaseSeed {
+                    id: 3,
+                    payload: vec![3],
+                },
                 signature: CrashSignature {
                     category: FailureClass::Budget.to_string(),
                     digest: 3,
@@ -102,7 +108,10 @@ mod tests {
             },
             CaseBundleDocument {
                 schema: 1,
-                seed: CaseSeed { id: 2, payload: vec![2] },
+                seed: CaseSeed {
+                    id: 2,
+                    payload: vec![2],
+                },
                 signature: CrashSignature {
                     category: FailureClass::State.to_string(),
                     digest: 2,

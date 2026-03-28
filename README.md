@@ -115,6 +115,30 @@ cargo run --bin replay-single-seed -- ./bundle.json
 
 The command exits `0` when replayed `class` and signature fields (`digest`, `signature_hash`) match the bundle's recorded signature; it exits non-zero with a mismatch report otherwise.
 
+### Transient RPC Retry Strategy
+
+`crashlab-core` implements a bounded retry strategy with exponential backoff and jitter for simulation and reproduction calls that fail due to transient network or RPC errors.
+
+#### Error Classification
+
+Simulation and reproduction calls (via `run_matrix`, `FlakyDetector::check`, or `filter_ci_pack`) must return a `Result<CrashSignature, SimulationError>`.
+
+*   **`SimulationError::Transient`**: Safe to retry (e.g., HTTP 429 Rate Limit, HTTP 503 Service Unavailable, connection timeouts).
+*   **`SimulationError::NonTransient`**: Immediate failure (e.g., HTTP 400 Bad Request, contract traps, logical invariants).
+
+#### Configuration
+
+The default retry configuration is:
+
+*   **Max Attempts**: 5 (initial call + 4 retries)
+*   **Initial Backoff**: 100ms
+*   **Max Backoff**: 10 seconds
+*   **Backoff Algorithm**: Exponential (`2^(attempt-1)`) with randomized jitter (0.5x to 1.5x of base backoff).
+
+#### Determinism in Tests
+
+The implementation integrates with `SeededPrng` to ensure jitter is deterministic and reproducible during tests when a seed is provided.
+
 Expected bundle JSON shape:
 
 ```json

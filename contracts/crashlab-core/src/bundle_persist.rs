@@ -248,11 +248,8 @@ mod tests {
         let response = RpcResponseEnvelope::success(serde_json::json!({
             "results": [{"xdr": "AAAA"}]
         }));
-        let envelope = RpcEnvelopeCapture::new_with_timestamp(
-            request,
-            response,
-            "2024-03-15T10:30:00Z",
-        );
+        let envelope =
+            RpcEnvelopeCapture::new_with_timestamp(request, response, "2024-03-15T10:30:00Z");
         let bundle = to_bundle_with_rpc_envelope(
             crate::CaseSeed {
                 id: 42,
@@ -267,10 +264,7 @@ mod tests {
         assert!(loaded.rpc_envelope.is_some());
         let loaded_envelope = loaded.rpc_envelope.unwrap();
         assert_eq!(loaded_envelope.request.method, "simulateTransaction");
-        assert_eq!(
-            loaded_envelope.request.params["auth"],
-            "[REDACTED]"
-        );
+        assert_eq!(loaded_envelope.request.params["auth"], "[REDACTED]");
         assert_eq!(loaded_envelope.captured_at, "2024-03-15T10:30:00Z");
     }
 
@@ -291,7 +285,8 @@ mod tests {
     fn json_contains_rpc_envelope_when_present() {
         let request = RpcRequestEnvelope::new("test", serde_json::json!({}));
         let response = RpcResponseEnvelope::success(serde_json::json!({}));
-        let envelope = RpcEnvelopeCapture::new_with_timestamp(request, response, "2024-01-01T00:00:00Z");
+        let envelope =
+            RpcEnvelopeCapture::new_with_timestamp(request, response, "2024-01-01T00:00:00Z");
         let bundle = to_bundle_with_rpc_envelope(
             crate::CaseSeed {
                 id: 1,

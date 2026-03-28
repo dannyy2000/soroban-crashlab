@@ -126,7 +126,11 @@ impl CrashIndex {
     /// Ties are broken by `signature_hash` for deterministic output.
     pub fn groups_by_count(&self) -> Vec<&CrashGroup> {
         let mut groups: Vec<&CrashGroup> = self.groups.values().collect();
-        groups.sort_by(|a, b| b.count.cmp(&a.count).then_with(|| a.signature_hash.cmp(&b.signature_hash)));
+        groups.sort_by(|a, b| {
+            b.count
+                .cmp(&a.count)
+                .then_with(|| a.signature_hash.cmp(&b.signature_hash))
+        });
         groups
     }
 
@@ -164,7 +168,11 @@ impl CrashIndex {
         CrashIndexSummary {
             unique_signatures: self.groups.len() as u64,
             total_crashes,
-            groups: self.groups_by_count().into_iter().map(CrashGroupRecord::from).collect(),
+            groups: self
+                .groups_by_count()
+                .into_iter()
+                .map(CrashGroupRecord::from)
+                .collect(),
         }
     }
 }
@@ -196,10 +204,7 @@ impl CrashIndexSummary {
         for g in &self.groups {
             out.push_str(&format!(
                 "{:#018x}  {:<16} {:>6}  seed#{}\n",
-                g.signature_hash,
-                g.category,
-                g.count,
-                g.newest_seed_id,
+                g.signature_hash, g.category, g.count, g.newest_seed_id,
             ));
         }
         out
@@ -209,7 +214,7 @@ impl CrashIndexSummary {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{CaseSeed, to_bundle};
+    use crate::{to_bundle, CaseSeed};
 
     fn bundle(id: u64, payload: Vec<u8>) -> CaseBundle {
         to_bundle(CaseSeed { id, payload })
@@ -281,9 +286,9 @@ mod tests {
     fn groups_by_category_sorts_by_category_then_count() {
         let mut idx = CrashIndex::new();
         // Force two different categories by using empty (empty-input) and oversized payloads.
-        idx.insert(bundle(1, vec![]));           // empty-input
-        idx.insert(bundle(2, vec![0x01]));       // runtime-failure
-        idx.insert(bundle(3, vec![0x01]));       // runtime-failure (count=2)
+        idx.insert(bundle(1, vec![])); // empty-input
+        idx.insert(bundle(2, vec![0x01])); // runtime-failure
+        idx.insert(bundle(3, vec![0x01])); // runtime-failure (count=2)
 
         let groups = idx.groups_by_category();
         // "empty-input" < "runtime-failure" lexicographically.
@@ -306,7 +311,9 @@ mod tests {
     #[test]
     fn summary_totals_are_correct() {
         let mut idx = CrashIndex::new();
-        for _ in 0..5 { idx.insert(bundle(1, vec![0x01])); }
+        for _ in 0..5 {
+            idx.insert(bundle(1, vec![0x01]));
+        }
         idx.insert(bundle(2, vec![0x02]));
 
         let s = idx.summary();

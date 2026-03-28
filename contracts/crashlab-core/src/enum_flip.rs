@@ -5,8 +5,8 @@
 //! - `[1]` variant tag
 //! - `[2..]` payload bytes
 
-use crate::CaseSeed;
 use crate::scheduler::Mutator;
+use crate::CaseSeed;
 
 const ENUM_MARKER: u8 = 0xE0;
 const VALID_TAGS: [u8; 4] = [0x00, 0x01, 0x02, 0x03];
