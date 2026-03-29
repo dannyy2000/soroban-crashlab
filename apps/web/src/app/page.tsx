@@ -42,6 +42,12 @@ import IntegrateWebhookManagerForRunEvents from './integrate-webhook-manager-for
 import MetricsExportToPrometheus from './integrate-metrics-export-to-prometheus';
 import LogViewer from './implement-log-viewer-component';
 import AddAccessibleKeyboardNavBlueprint from './add-accessible-keyboard-nav-blueprint';
+import ArtifactExplorer from './add-artifact-explorer';
+import RunSeverityFilter from './add-run-filtering-by-severity';
+import AddRunTimeline from './add-run-timeline';
+import OnboardingChecklistModal from './implement-onboarding-checklist-modal-component';
+import FailureClassificationTaxonomy from './add-failure-classification-taxonomy';
+import AddAFuzzyQueryBuilderPage51 from './add-a-fuzzy-query-builder-page-51';
 import AddResponsiveLayoutImprovements from './add-responsive-layout-improvements';
 import AddKeyboardNavigationHelp from './add-keyboard-navigation-help';
 
@@ -412,6 +418,11 @@ function HomeContent() {
       {/* Run workflow board section */}
       <div className="w-full mb-12">
         <ImplementRunWorkflowBoardPage58 runs={runs} />
+      </div>
+
+      {/* Fuzzy query builder section */}
+      <div className="w-full mb-12">
+        <AddAFuzzyQueryBuilderPage51 runs={runs} />
       </div>
       {/* Cross-run board widgets section — maintainer only */}
       {isMaintainer && (
