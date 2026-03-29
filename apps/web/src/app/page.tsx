@@ -37,6 +37,7 @@ import AddRunStatusTimeline from './add-run-status-timeline';
 import AddExportRunJson from './add-export-run-json';
 import AddExportRunCsv from './add-export-run-csv';
 import IntegrateWebhookManagerForRunEvents from './integrate-webhook-manager-for-run-events';
+import MetricsExportToPrometheus from './integrate-metrics-export-to-prometheus';
 import LogViewer from './implement-log-viewer-component';
 import AddAccessibleKeyboardNavBlueprint from './add-accessible-keyboard-nav-blueprint';
 import ArtifactExplorer from './add-artifact-explorer';
@@ -903,6 +904,10 @@ function HomeContent() {
           onReplayComplete={handleReplayComplete}
         />
       )}
+
+      <div className="mb-12 w-full">
+        <MetricsExportToPrometheus />
+      </div>
 
       <div className="mt-12 mb-16 w-full">
         <IntegrateWebhookManagerForRunEvents />
