@@ -4,6 +4,7 @@ import type { LedgerStateChange } from '../../types';
 import { buildMockRuns } from '../../mockRuns';
 import RunIssueLinkPage53 from '../../add-run-issue-link-page-53';
 import RunStatusTimeline from '../../create-run-status-timeline-component-52';
+import DownloadArtifactsButton from './DownloadArtifactsButton';
 
 interface RunDetailPageProps {
     params: Promise<{ id: string }>;
@@ -62,12 +63,15 @@ export default async function RunDetailPage({ params }: RunDetailPageProps) {
                             ID: {run.id}
                         </p>
                     </div>
-                    <Link
-                        href="/"
-                        className="inline-flex items-center justify-center h-10 px-4 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
-                    >
-                        Back to Dashboard
-                    </Link>
+                    <div className="flex flex-wrap gap-2">
+                        <DownloadArtifactsButton run={run} ledgerChanges={ledgerChanges} />
+                        <Link
+                            href="/"
+                            className="inline-flex items-center justify-center h-10 px-4 rounded-full bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition"
+                        >
+                            Back to Dashboard
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="mb-8">

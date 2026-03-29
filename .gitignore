@@ -14,5 +14,7 @@ apps/web/.next/
 
 .agents/
 .claude/
+.gemini/
 issue.md
+AGENTS.md
 skills-lock.json
