@@ -33,6 +33,27 @@ pub enum RunTerminalState {
     Failed { message: String },
 }
 
+/// Deterministic worker partitioning for parallel execution.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct WorkerPartition {
+    pub index: u64,
+    pub total: u64,
+}
+
+impl WorkerPartition {
+    /// Creates a new `WorkerPartition`. Panics if `total == 0` or `index >= total`.
+    pub fn new(index: u64, total: u64) -> Self {
+        assert!(total > 0, "total workers must be greater than 0");
+        assert!(index < total, "worker index must be less than total workers");
+        Self { index, total }
+    }
+
+    /// Returns true if this worker is responsible for the given seed index.
+    pub const fn owns(&self, seed_index: u64) -> bool {
+        (seed_index % self.total) == self.index
+    }
+}
+
 /// Cooperative cancellation: in-process flag plus optional on-disk marker.
 #[derive(Clone, Debug)]
 pub struct CancelSignal {
@@ -126,11 +147,14 @@ pub fn clear_cancel_request(run_id: RunId, base: impl AsRef<Path>) -> io::Result
 }
 
 /// Runs `work` for each seed index in `0..total`, stopping early when `signal` fires.
+/// If `partition` is provided, only seeds owned by that partition are processed, but
+/// `total_seeds` is evaluated completely for cancellation reasons.
 /// Returns [`RunTerminalState::Cancelled`] with a partial summary, or [`RunTerminalState::Completed`].
 pub fn drive_run<F>(
     _run_id: RunId,
     total_seeds: u64,
     signal: &CancelSignal,
+    partition: Option<WorkerPartition>,
     mut work: F,
 ) -> RunTerminalState
 where
@@ -138,6 +162,12 @@ where
 {
     let mut seeds_processed = 0u64;
     for seed_index in 0..total_seeds {
+        if let Some(p) = &partition {
+            if !p.owns(seed_index) {
+                continue;
+            }
+        }
+
         if signal.is_cancelled() {
             return RunTerminalState::Cancelled {
                 summary: RunSummary {
@@ -179,7 +209,7 @@ mod tests {
         let signal = CancelSignal::new(id);
         signal.cancel();
 
-        let outcome = drive_run(id, 100, &signal, |_i| Ok(()));
+        let outcome = drive_run(id, 100, &signal, None, |_i| Ok(()));
         match outcome {
             RunTerminalState::Cancelled { summary } => {
                 assert_eq!(summary.seeds_processed, 0);
@@ -194,7 +224,7 @@ mod tests {
         let id = RunId(2);
         let signal = CancelSignal::new(id);
         let mut seen = 0u64;
-        let outcome = drive_run(id, 5, &signal, |_i| {
+        let outcome = drive_run(id, 5, &signal, None, |_i| {
             seen += 1;
             Ok(())
         });
@@ -235,7 +265,7 @@ mod tests {
         let id = RunId(3);
         let signal = CancelSignal::with_state_dir(id, &base);
 
-        let outcome = drive_run(id, 10, &signal, |i| {
+        let outcome = drive_run(id, 10, &signal, None, |i| {
             if i == 2 {
                 request_cancel_run(id, &base).expect("request cancel");
             }
@@ -249,5 +279,39 @@ mod tests {
             other => panic!("expected cancelled, got {other:?}"),
         }
         let _ = fs::remove_dir_all(&base);
+    }
+    
+    #[test]
+    fn drive_run_respects_worker_partition() {
+        let id = RunId(4);
+        let signal = CancelSignal::new(id);
+        
+        let partition = WorkerPartition::new(1, 3);
+        
+        let mut seen = Vec::new();
+        let outcome = drive_run(id, 10, &signal, Some(partition), |i| {
+            seen.push(i);
+            Ok(())
+        });
+        
+        match outcome {
+            RunTerminalState::Completed { summary } => {
+                // 10 seeds: 0..9.
+                // Mod 3 gives:
+                // 0 -> 0
+                // 1 -> 1 *
+                // 2 -> 2
+                // 3 -> 0
+                // 4 -> 1 *
+                // 5 -> 2
+                // 6 -> 0
+                // 7 -> 1 *
+                // 8 -> 2
+                // 9 -> 0
+                assert_eq!(summary.seeds_processed, 3);
+                assert_eq!(seen, vec![1, 4, 7]);
+            }
+            other => panic!("expected completed, got {other:?}"),
+        }
     }
 }

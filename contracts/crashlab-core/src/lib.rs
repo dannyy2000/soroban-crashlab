@@ -70,7 +70,7 @@ pub use container_stress::{
 
 pub mod run_control;
 pub use run_control::{
-    CancelSignal, RunId, RunSummary, RunTerminalState, cancel_marker_path, cancel_requested,
+    CancelSignal, RunId, RunSummary, RunTerminalState, WorkerPartition, cancel_marker_path, cancel_requested,
     clear_cancel_request, default_state_dir, drive_run, request_cancel_run,
 };
 
