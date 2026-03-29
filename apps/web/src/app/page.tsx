@@ -31,6 +31,7 @@ import CampaignMilestoneTimeline from './campaign-milestone-timeline-55';
 import VirtualizedRunTable from './implement-virtualized-run-table-component';
 import ReportingTemplatesManager from './add-reporting-templates-manager';
 import AutomatedRegressionDeployIntegration from './integrate-automated-regression-deploy-integration';
+import IntegrationTestHarnessForUIFlows from './integrate-integration-test-harness-for-ui-flows';
 import ReportGenerator from './add-report-generator';
 import WidgetLayoutEditor from './implement-widget-layout-editor-component';
 import AddRunStatusTimeline from './add-run-status-timeline';
@@ -801,6 +802,10 @@ function HomeContent() {
 
       <div className="mb-12 w-full">
         <AutomatedRegressionDeployIntegration />
+      </div>
+
+      <div className="mb-12 w-full">
+        <IntegrationTestHarnessForUIFlows />
       </div>
 
       {isMaintainer && (
