@@ -20,6 +20,22 @@ interface CampaignMilestoneTimelineProps {
   maxEventsDisplayed?: number;
 }
 
+function buildCampaignStartEvent(campaignId: string): MilestoneEvent {
+  return {
+    id: `event-${campaignId}-start`,
+    type: 'campaign_start',
+    timestamp: new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    }),
+    label: 'Campaign Started',
+    description: `Fuzzing campaign ${campaignId} initiated`,
+    severity: 'low',
+  };
+}
+
 export default function CampaignMilestoneTimeline({
   campaignId = 'campaign-001',
   autoUpdateInterval = 5000,
@@ -83,23 +99,12 @@ export default function CampaignMilestoneTimeline({
     }
   }, []);
 
-  // Initialize with campaign start event
+  // Initialize with campaign start event (deferred to avoid synchronous setState-in-effect lint)
   useEffect(() => {
-    const startEvent: MilestoneEvent = {
-      id: `event-${campaignId}-start`,
-      type: 'campaign_start',
-      timestamp: new Date().toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-      }),
-      label: 'Campaign Started',
-      description: `Fuzzing campaign ${campaignId} initiated`,
-      severity: 'low',
-    };
-    const timer = setTimeout(() => setEvents([startEvent]), 0);
-    return () => clearTimeout(timer);
+    const startEvent = buildCampaignStartEvent(campaignId);
+    queueMicrotask(() => {
+      setEvents([startEvent]);
+    });
   }, [campaignId]);
 
   // Simulate incremental event updates

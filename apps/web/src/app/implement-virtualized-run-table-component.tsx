@@ -185,11 +185,12 @@ export default function VirtualizedRunTable({
 
     /** Reset scroll position whenever the run list changes (e.g. filtering). */
     useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = 0;
-        }
-        const timer = setTimeout(() => setScrollTop(0), 0);
-        return () => clearTimeout(timer);
+        const el = scrollRef.current;
+        if (!el) return;
+        el.scrollTop = 0;
+        queueMicrotask(() => {
+            setScrollTop(0);
+        });
     }, [runs]);
 
     if (runs.length === 0) {

@@ -250,6 +250,7 @@ export default function AccessibleKeyboardNavPage() {
 
               <button
                 type="button"
+                onClick={handleReset}
                 onFocus={() => handleFocus('reset-button')}
                 onBlur={handleBlur}
                 className="px-4 py-2 bg-zinc-200 dark:bg-zinc-700 hover:bg-zinc-300 dark:hover:bg-zinc-600 text-zinc-900 dark:text-zinc-50 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 dark:focus:ring-offset-zinc-900"
