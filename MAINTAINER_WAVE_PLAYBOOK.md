@@ -89,6 +89,26 @@ Review inside 24 hours to prevent unnecessary automated appeals. Review in this 
 4. Test coverage
 5. Clarity and maintainability
 
+## Dependency update review and rollback policy
+
+Use the [Security Policy dependency update control path](.github/SECURITY.md#dependency-update-review-and-rollback) for dependency version bumps and lockfile updates in this repository.
+
+### Review requirements
+
+1. Confirm the PR is narrowly scoped to the dependency family, advisory, or package set being updated.
+2. Confirm the PR description summarizes the upstream changelog, release notes, and any relevant advisory for each version hop.
+3. Confirm the PR explicitly calls out `CHANGELOG.md` or release-process impact when the update affects public APIs, documented maintainer workflow, or compatibility assumptions.
+4. Confirm the PR includes a rollback plan: previous known-good version, rollback trigger, and revert path.
+5. Confirm the post-update validation checklist was run for the affected surfaces only and that the PR includes a short command output summary.
+
+### Rollback requirements
+
+- Do not approve or merge a dependency update without a rollback path that another maintainer can execute without guesswork.
+- Prefer rollback notes that name the exact manifest and lockfile files to restore, plus whether the expected path is `git revert` or an explicit version re-pin.
+- Treat lockfile-only updates as security-sensitive changes: identify the changed transitive packages before approval.
+
+Known boundary: this process improves review quality, but it does not replace upstream advisory handling or automated dependency scanning. The current CI still relies on tests and linting rather than `cargo audit` or `npm audit`.
+
 ## Release management
 
 Use [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) whenever you need to
@@ -124,6 +144,8 @@ environment mismatches instead of guesswork.
 
 The project's coordinated vulnerability disclosure process and response expectations are defined in [`.github/SECURITY.md`](.github/SECURITY.md). Maintainers are responsible for triaging incoming reports within the timelines specified there.
 
+Dependency update review and rollback requirements are defined in [`.github/SECURITY.md#dependency-update-review-and-rollback`](.github/SECURITY.md#dependency-update-review-and-rollback). Dependency vulnerabilities still belong upstream, but dependency update PRs in this repository must follow the documented changelog-review, rollback, and validation path.
+
 ## Operational Security Assumptions
 
 ### Deployment Trust Assumptions
@@ -154,7 +176,7 @@ When reviewing changes to artifact storage:
 ### CI security checks
 - **Existing checks**:
   - Rust: `cargo test --all-targets` (compilation and unit tests)
-  - Web: `npm run lint` and `npm run build`
+  - Web: `npm run test`, `npm run lint`, and `npm run build`
 - **Missing checks** (gaps):
   - Dependency vulnerability scanning for Rust (`cargo audit`) and npm (`npm audit`).
   - Security-focused linter rules (e.g., `cargo clippy` with `--deny=unsafe_code` or similar).
@@ -209,6 +231,17 @@ bash scripts/check-sla.sh
 The script lists open PRs with no review past 24 h and assigned issues
 with no update past 48 h. It exits non-zero when breaches are found so
 it can be wired into a CI schedule.
+
+### Running the dependency update policy check
+
+Use the focused dependency update policy test when dependency-review docs, rollback requirements, or validation commands change:
+
+```bash
+cd apps/web
+npm run test:policy
+```
+
+The test verifies the primary ready-for-review path, a lockfile-only edge case, the documented timers, the required changelog review, and the rollback and validation checklist expectations across the docs and PR description.
 
 ## Post-resolution feedback
 

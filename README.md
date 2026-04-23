@@ -13,7 +13,7 @@ Most contract failures happen in edge cases that are not covered by manual tests
 
 ## Security
 
-To report a vulnerability, see our [Security Policy](.github/SECURITY.md). Do not open a public issue for security concerns.
+To report a vulnerability, see our [Security Policy](.github/SECURITY.md). Do not open a public issue for security concerns. Dependency update changelog review, rollback, and post-update validation requirements are documented in the same policy and the maintainer playbook.
 
 ## Repository structure
 
@@ -60,6 +60,7 @@ gh --version # optional
 ```bash
 cd apps/web
 npm ci
+npm run test
 npm run lint
 npm run build
 npm run dev
@@ -235,10 +236,9 @@ For release tagging, changelog upkeep, and compatibility review, follow the
 
 
 
-## Resolved TODOs
-- All security-related TODOs addressed in source files
-- Verified via: `grep -n "TODO\|TBD" README.md CONTRIBUTING.md MAINTAINER_WAVE_PLAYBOOK.md`
-- No unresolved security TODOs found
+## Resolved Maintenance Notes
+- All previously tracked security placeholders have been addressed in source files.
+- Current security-process validation is covered by the policy checks in `apps/web`.
 
 Documentation updated in:
 - README.md: Added Security Hardening Assumptions section
