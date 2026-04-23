@@ -747,10 +747,6 @@ function HomeContent() {
             )}
             <div className="mb-8 w-full">
               <CampaignMilestoneTimeline
-                runs={runs}
-                dataState={dataState}
-                onRetry={() => setFetchAttempt((n) => n + 1)}
-                errorMessage="Timeline stream unavailable while run data is loading."
                 campaignId="campaign-001"
                 autoUpdateInterval={5000}
                 maxEventsDisplayed={10}
