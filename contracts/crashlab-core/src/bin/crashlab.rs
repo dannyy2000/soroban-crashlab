@@ -1,11 +1,12 @@
 //! CrashLab CLI — campaign control helpers for operators.
 //!
 //! Run `crashlab run cancel <id>` to request cooperative cancellation for the
-//! campaign identified by `id`. The running worker must poll
-//! [`crashlab_core::cancel_requested`] or use [`crashlab_core::CancelSignal`].
+//! campaign identified by `id`, or `crashlab replay seed <bundle.json>` to
+//! replay one persisted seed bundle end to end.
 
 use crashlab_core::{
-    cancel_marker_path, default_state_dir, request_cancel_run, RunId,
+    RunId, cancel_marker_path, default_state_dir, replay_mismatch_message, replay_seed_bundle_path,
+    replay_success_message, request_cancel_run,
 };
 
 fn main() {
@@ -15,14 +16,16 @@ fn main() {
     let a = args.next();
     let b = args.next();
     let c = args.next();
+    let d = args.next();
 
-    if args.next().is_some() {
-        eprintln!("usage: crashlab run cancel <id>");
-        std::process::exit(1);
-    }
-
-    match (a.as_deref(), b.as_deref(), c.as_deref()) {
-        (Some("run"), Some("cancel"), Some(id_str)) => {
+    match (a.as_deref(), b.as_deref(), c.as_deref(), d.as_deref()) {
+        (Some("run"), Some("cancel"), Some(id_str), None) => {
+            if args.next().is_some() {
+                eprintln!(
+                    "usage: crashlab run cancel <id>\n       crashlab replay seed <bundle-json-path>"
+                );
+                std::process::exit(1);
+            }
             let id: u64 = match id_str.parse() {
                 Ok(v) => v,
                 Err(_) => {
@@ -43,8 +46,32 @@ fn main() {
                 }
             }
         }
+        (Some("replay"), Some("seed"), Some(path), None) => {
+            if args.next().is_some() {
+                eprintln!(
+                    "usage: crashlab run cancel <id>\n       crashlab replay seed <bundle-json-path>"
+                );
+                std::process::exit(1);
+            }
+
+            match replay_seed_bundle_path(path) {
+                Ok(result) if result.matches => {
+                    println!("{}", replay_success_message(&result));
+                }
+                Ok(result) => {
+                    eprintln!("{}", replay_mismatch_message(&result));
+                    std::process::exit(1);
+                }
+                Err(err) => {
+                    eprintln!("{err}");
+                    std::process::exit(1);
+                }
+            }
+        }
         _ => {
-            eprintln!("usage: crashlab run cancel <id>");
+            eprintln!(
+                "usage: crashlab run cancel <id>\n       crashlab replay seed <bundle-json-path>"
+            );
             std::process::exit(1);
         }
     }

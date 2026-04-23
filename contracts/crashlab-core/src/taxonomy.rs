@@ -1,5 +1,5 @@
 use crate::is_invalid_enum_tag_payload;
-use crate::CaseSeed;
+use crate::{CaseSeed, CrashSignature};
 use std::collections::HashMap;
 
 /// Stable failure categories for Soroban contract crashes.
@@ -68,6 +68,21 @@ impl FailureClass {
         FailureClass::OversizedInput,
         FailureClass::Unknown,
     ];
+
+    /// Parses a persisted category label into a stable failure class.
+    pub fn from_category_label(label: &str) -> Option<Self> {
+        match label {
+            "auth" => Some(FailureClass::Auth),
+            "budget" => Some(FailureClass::Budget),
+            "state" => Some(FailureClass::State),
+            "xdr" => Some(FailureClass::Xdr),
+            "invalid-enum-tag" => Some(FailureClass::InvalidEnumTag),
+            "empty-input" => Some(FailureClass::EmptyInput),
+            "oversized-input" => Some(FailureClass::OversizedInput),
+            "unknown" => Some(FailureClass::Unknown),
+            _ => None,
+        }
+    }
 }
 
 impl std::fmt::Display for FailureClass {
@@ -152,6 +167,24 @@ pub fn group_by_class(seeds: &[CaseSeed]) -> HashMap<FailureClass, Vec<&CaseSeed
         map.entry(classify_failure(seed)).or_default().push(seed);
     }
     map
+}
+
+/// Resolves a stable class for a persisted bundle signature.
+///
+/// Bundles written before the taxonomy rollout may still carry the legacy
+/// `"runtime-failure"` signature category. In that case we derive the stable
+/// class from the seed payload so replay remains reproducible across reruns.
+pub fn stable_failure_class_for_bundle(
+    seed: &CaseSeed,
+    signature: &CrashSignature,
+) -> FailureClass {
+    FailureClass::from_category_label(&signature.category).unwrap_or_else(|| {
+        if signature.category == "runtime-failure" {
+            classify_failure(seed)
+        } else {
+            FailureClass::Unknown
+        }
+    })
 }
 
 #[cfg(test)]
@@ -262,12 +295,53 @@ mod tests {
     }
 
     #[test]
+    fn parses_stable_category_labels() {
+        assert_eq!(
+            FailureClass::from_category_label("budget"),
+            Some(FailureClass::Budget)
+        );
+        assert_eq!(FailureClass::from_category_label("runtime-failure"), None);
+    }
+
+    #[test]
     fn invalid_enum_tag_is_classified_distinctly() {
         let seed = CaseSeed {
             id: 0,
             payload: vec![0xE0, 0xFF],
         };
         assert_eq!(classify_failure(&seed), FailureClass::InvalidEnumTag);
+    }
+
+    #[test]
+    fn stable_class_uses_legacy_runtime_failure_seed_mapping() {
+        let runtime = CrashSignature {
+            category: "runtime-failure".into(),
+            digest: 1,
+            signature_hash: 2,
+        };
+
+        assert_eq!(
+            stable_failure_class_for_bundle(&seed(vec![0xA0, 0x01]), &runtime),
+            FailureClass::Auth
+        );
+        assert_eq!(
+            stable_failure_class_for_bundle(&seed(vec![0x10]), &runtime),
+            FailureClass::Xdr
+        );
+    }
+
+    #[test]
+    fn stable_class_prefers_explicit_signature_category_when_present() {
+        let signature = CrashSignature {
+            category: "state".into(),
+            digest: 1,
+            signature_hash: 2,
+        };
+
+        assert_eq!(
+            stable_failure_class_for_bundle(&seed(vec![0xA0, 0x01]), &signature),
+            FailureClass::State
+        );
     }
 
     // ── group_by_class ───────────────────────────────────────────────────────

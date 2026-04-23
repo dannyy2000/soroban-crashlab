@@ -13,8 +13,8 @@ use crate::worker_partition::WorkerPartition;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Opaque identifier for an active or completed run.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
@@ -36,27 +36,6 @@ pub enum RunTerminalState {
     Completed { summary: RunSummary },
     Cancelled { summary: RunSummary },
     Failed { message: String },
-}
-
-/// Deterministic worker partitioning for parallel execution.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct WorkerPartition {
-    pub index: u64,
-    pub total: u64,
-}
-
-impl WorkerPartition {
-    /// Creates a new `WorkerPartition`. Panics if `total == 0` or `index >= total`.
-    pub fn new(index: u64, total: u64) -> Self {
-        assert!(total > 0, "total workers must be greater than 0");
-        assert!(index < total, "worker index must be less than total workers");
-        Self { index, total }
-    }
-
-    /// Returns true if this worker is responsible for the given seed index.
-    pub const fn owns(&self, seed_index: u64) -> bool {
-        (seed_index % self.total) == self.index
-    }
 }
 
 /// Cooperative cancellation: in-process flag plus optional on-disk marker.
@@ -168,7 +147,7 @@ where
     let mut seeds_processed = 0u64;
     for seed_index in 0..total_seeds {
         if let Some(p) = &partition {
-            if !p.owns(seed_index) {
+            if !p.owns_seed(seed_index) {
                 continue;
             }
         }
@@ -326,20 +305,20 @@ mod tests {
         }
         let _ = fs::remove_dir_all(&base);
     }
-    
+
     #[test]
     fn drive_run_respects_worker_partition() {
         let id = RunId(4);
         let signal = CancelSignal::new(id);
-        
-        let partition = WorkerPartition::new(1, 3);
-        
+
+        let partition = WorkerPartition::try_new(1, 3).expect("partition");
+
         let mut seen = Vec::new();
         let outcome = drive_run(id, 10, &signal, Some(partition), |i| {
             seen.push(i);
             Ok(())
         });
-        
+
         match outcome {
             RunTerminalState::Completed { summary } => {
                 // 10 seeds: 0..9.
@@ -358,6 +337,8 @@ mod tests {
                 assert_eq!(seen, vec![1, 4, 7]);
             }
             other => panic!("expected completed, got {other:?}"),
+        }
+    }
 
     #[test]
     fn drive_run_partitioned_matches_seed_count_per_worker() {

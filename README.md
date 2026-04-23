@@ -78,7 +78,12 @@ Persist a [`RunCheckpoint`](contracts/crashlab-core/src/checkpoint.rs) (JSON) wi
 
 ### Artifact retention policy
 
-Apply configurable retention windows for old run artifacts with [`RetentionPolicy`](contracts/crashlab-core/src/retention.rs). Configure `max_failure_bundles` to keep the most recent failures (sorted by descending seed ID) and `max_checkpoints_per_campaign` to retain the most advanced checkpoints per campaign. Use `RetentionPolicy::retain_failure_bundles` and `RetentionPolicy::retain_checkpoints` to determine which artifacts to prune.
+Apply configurable retention windows for old run artifacts with [`RetentionPolicy`](contracts/crashlab-core/src/retention.rs). Count-based helpers remain available through `retain_failure_bundles` and `retain_checkpoints`, while time-aware pruning uses `RetentionRecord<T>` plus:
+
+- `retain_failure_bundle_records`: keeps the newest failures pinned via `keep_latest_failures`, then prunes older failures outside `failure_retention_window`.
+- `retain_checkpoint_records`: keeps each campaign's most advanced checkpoints and any checkpoints still inside `checkpoint_retention_window`.
+
+This lets maintainers preserve the latest failure evidence while pruning old non-critical artifacts deterministically.
 
 ### Corpus export (portable seed archive)
 
@@ -107,14 +112,31 @@ Run metadata JSON is versioned (`schema` / `RUN_METADATA_SCHEMA_VERSION`). Persi
 
 ### Replay one seed bundle
 
-Use the single-seed replay CLI to rerun classification from one persisted bundle:
+Use either replay CLI to rerun one persisted bundle end to end:
 
 ```bash
 cd contracts/crashlab-core
 cargo run --bin replay-single-seed -- ./bundle.json
+cargo run --bin crashlab -- replay seed ./bundle.json
 ```
 
-The command exits `0` when replayed `class` and signature fields (`digest`, `signature_hash`) match the bundle's recorded signature; it exits non-zero with a mismatch report otherwise.
+Replay reports both the stable taxonomy class (`auth`, `budget`, `state`, `xdr`, etc.) and the persisted signature fields (`category`, `digest`, `signature_hash`). The command exits `0` only when both the class and signature match the recorded bundle; it exits non-zero with a mismatch report otherwise.
+
+Legacy bundles that still store `signature.category = "runtime-failure"` remain replayable: the stable class is derived from the bundle seed so results stay reproducible across reruns.
+
+### Failure classification taxonomy
+
+CrashLab separates the stable failure class from the persisted crash signature:
+
+- `classify_failure(&seed)` maps bundle seeds into stable classes such as `auth`, `budget`, `state`, and `xdr`.
+- `stable_failure_class_for_bundle(&seed, &signature)` preserves backward compatibility by deriving a stable class from legacy `"runtime-failure"` signatures during replay.
+- `signature.category` remains unchanged in stored bundles, so older artifacts continue to round-trip through bundle persistence and replay.
+
+This keeps classification deterministic for dashboards and triage without breaking existing artifacts.
+
+### Stale run detection
+
+[`StaleRunDetector`](contracts/crashlab-core/src/stale_detector.rs) marks a run as stale when progress has not advanced within `StaleDetectorConfig::stale_threshold_ms`. Use `check()` during live runs or `check_with_elapsed()` in deterministic tests and health checks. `StaleStatus::Stale` includes both the elapsed stale duration and a recovery hint for operators.
 
 ### Transient RPC Retry Strategy
 
@@ -156,7 +178,7 @@ Expected bundle JSON shape:
 
 ### Persist failing case bundles (JSON, versioned)
 
-`crashlab-core` can serialize a [`CaseBundle`](contracts/crashlab-core/src/lib.rs) to portable UTF-8 JSON with a top-level **`schema`** field (`CASE_BUNDLE_SCHEMA_VERSION`, currently `1`). The document includes the **seed**, **crash signature**, optional **environment** fingerprint, and optional **`failure_payload`** bytes (e.g. stderr / diagnostics).
+`crashlab-core` can serialize a [`CaseBundle`](contracts/crashlab-core/src/lib.rs) to portable UTF-8 JSON with a top-level **`schema`** field (`CASE_BUNDLE_SCHEMA_VERSION`, currently `2`). The document includes the **seed**, **crash signature**, optional **environment** fingerprint, optional **`failure_payload`** bytes (e.g. stderr / diagnostics), and optional **`rpc_envelope`** capture for replay auditing.
 
 ```rust
 use crashlab_core::{load_case_bundle_json, save_case_bundle_json, to_bundle, CaseSeed};

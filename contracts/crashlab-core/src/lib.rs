@@ -5,17 +5,19 @@ pub mod reproducer;
 pub mod retry;
 pub mod taxonomy;
 
-pub use auth_matrix::{collect_mismatched, run_matrix, AuthMode, MatrixReport, ModeResult};
+pub use auth_matrix::{AuthMode, MatrixReport, ModeResult, collect_mismatched, run_matrix};
 pub use health::{
     FailureMetrics, HealthMonitor, HealthStatus, HealthSummary, QueueMetrics, ThroughputMetrics,
 };
 pub use prng::SeededPrng;
 pub use reproducer::{
-    filter_ci_pack, shrink_bundle_payload, shrink_seed_preserving_signature, FlakyDetector,
-    ReproReport,
+    FlakyDetector, ReproReport, filter_ci_pack, shrink_bundle_payload,
+    shrink_seed_preserving_signature,
 };
-pub use retry::{execute_with_retry, RetryConfig, SimulationError};
-pub use taxonomy::{classify_failure, group_by_class, FailureClass};
+pub use retry::{RetryConfig, SimulationError, execute_with_retry};
+pub use taxonomy::{
+    FailureClass, classify_failure, group_by_class, stable_failure_class_for_bundle,
+};
 
 pub mod seed_validator;
 pub use seed_validator::{SeedSchema, SeedValidationError, Validate};
@@ -26,49 +28,54 @@ pub use scheduler::{Mutator, SchedulerError, WeightedScheduler};
 pub mod campaign_presets;
 pub use campaign_presets::{CampaignParameters, CampaignPreset, ParseCampaignPresetError};
 pub mod replay;
-pub use replay::{replay_seed_bundle, ReplayResult};
+pub use replay::{
+    ReplayError, ReplayResult, replay_mismatch_message, replay_seed_bundle,
+    replay_seed_bundle_json, replay_seed_bundle_path, replay_success_message,
+};
 
 pub mod env_fingerprint;
 pub use env_fingerprint::{
-    check_bundle_replay_environment, check_replay_environment, EnvironmentFingerprint,
-    ReplayEnvironmentReport,
+    EnvironmentFingerprint, ReplayEnvironmentReport, check_bundle_replay_environment,
+    check_replay_environment,
 };
 pub mod boundary;
-pub use boundary::{generate_boundary_vectors, BoundaryMutator};
+pub use boundary::{BoundaryMutator, generate_boundary_vectors};
 
 pub mod enum_flip;
-pub use enum_flip::{is_invalid_enum_tag_payload, EnumVariantFlipMutator};
+pub use enum_flip::{EnumVariantFlipMutator, is_invalid_enum_tag_payload};
 
 pub mod decimal_precision;
 pub use decimal_precision::{
-    decimal_boundary_cases, generate_decimal_precision_vectors, DecimalBoundaryCase,
-    DecimalPrecisionMutator,
+    DecimalBoundaryCase, DecimalPrecisionMutator, decimal_boundary_cases,
+    generate_decimal_precision_vectors,
 };
 
 pub mod bundle_persist;
 pub use bundle_persist::{
-    read_case_bundle_json, save_case_bundle_json, write_case_bundle_json, BundlePersistError,
-    CaseBundleDocument, CASE_BUNDLE_SCHEMA_VERSION, SUPPORTED_BUNDLE_SCHEMAS,
+    BundlePersistError, CASE_BUNDLE_SCHEMA_VERSION, CaseBundleDocument, SUPPORTED_BUNDLE_SCHEMAS,
+    read_case_bundle_json, save_case_bundle_json, write_case_bundle_json,
 };
 
 pub mod artifact_compress;
 pub use artifact_compress::{compress_artifact, decompress_artifact};
 
 pub mod fixture_compat;
-pub use fixture_compat::{check_bundle_fixtures, check_seed_fixtures, CompatReport, CompatWarning};
+pub use fixture_compat::{CompatReport, CompatWarning, check_bundle_fixtures, check_seed_fixtures};
 
 pub mod fixture_manifest;
 pub use fixture_manifest::{
-    FixtureManifest, FixtureMetadata, ManifestError, FIXTURE_MANIFEST_SCHEMA_VERSION,
+    FIXTURE_MANIFEST_SCHEMA_VERSION, FixtureManifest, FixtureMetadata, ManifestError,
 };
 
 pub mod fixture_linter;
-pub use fixture_linter::{FixtureLinter, LintConfig, LintIssue, LintLevel, LintReport, LinterError};
+pub use fixture_linter::{
+    FixtureLinter, LintConfig, LintIssue, LintLevel, LintReport, LinterError,
+};
 
 pub mod signature_comparison;
 pub use signature_comparison::{
-    compare_signatures, ComparisonError, ComparisonMetrics, SignatureComparisonResult,
-    SignatureInfo, SignatureSnapshot,
+    ComparisonError, ComparisonMetrics, SignatureComparisonResult, SignatureInfo,
+    SignatureSnapshot, compare_signatures,
 };
 
 pub mod fixture_sanitize;
@@ -80,47 +87,47 @@ pub use fixture_sanitize::{
 
 pub mod checkpoint;
 pub use checkpoint::{
-    load_run_checkpoint_json, save_run_checkpoint_json, CheckpointError, RunCheckpoint,
-    RUN_CHECKPOINT_SCHEMA_VERSION,
+    CheckpointError, RUN_CHECKPOINT_SCHEMA_VERSION, RunCheckpoint, load_run_checkpoint_json,
+    save_run_checkpoint_json,
 };
 
 pub mod corpus;
 pub use corpus::{
-    corpus_archive_from_seeds, export_corpus_json, import_corpus_json, CorpusArchive, CorpusError,
-    CORPUS_ARCHIVE_SCHEMA_VERSION,
+    CORPUS_ARCHIVE_SCHEMA_VERSION, CorpusArchive, CorpusError, corpus_archive_from_seeds,
+    export_corpus_json, import_corpus_json,
 };
 
 pub mod retention;
-pub use retention::RetentionPolicy;
+pub use retention::{RetentionPolicy, RetentionRecord};
 
 pub mod scenario_export;
 pub use scenario_export::{
-    export_crash_report_markdown, export_rust_regression_fixture, export_scenario_json,
-    export_suite_json, FailureScenario,
+    FailureScenario, export_crash_report_markdown, export_rust_regression_fixture,
+    export_scenario_json, export_suite_json,
 };
 
 pub mod regression_suite;
 pub use regression_suite::{
-    load_regression_suite_json, run_regression_suite, run_regression_suite_from_json,
-    RegressionCaseResult, RegressionSuiteSummary,
+    RegressionCaseResult, RegressionSuiteSummary, load_regression_suite_json, run_regression_suite,
+    run_regression_suite_from_json,
 };
 
 pub mod regression_grouping;
 pub use regression_grouping::{
-    export_rust_regression_suite, group_bundles_by_regression_group, regression_group_key,
-    regression_group_keys_sorted, regression_group_module_ident, RegressionGroupKey,
+    RegressionGroupKey, export_rust_regression_suite, group_bundles_by_regression_group,
+    regression_group_key, regression_group_keys_sorted, regression_group_module_ident,
 };
 
 pub mod simulation;
 pub use simulation::{
-    load_run_metadata_json, run_simulation_with_timeout, save_run_metadata_json,
-    timeout_crash_signature, RunMetadata, RunMetadataError, SimulationTimeoutConfig,
-    RUN_METADATA_SCHEMA_VERSION, SUPPORTED_RUN_METADATA_SCHEMAS,
+    RUN_METADATA_SCHEMA_VERSION, RunMetadata, RunMetadataError, SUPPORTED_RUN_METADATA_SCHEMAS,
+    SimulationTimeoutConfig, load_run_metadata_json, run_simulation_with_timeout,
+    save_run_metadata_json, timeout_crash_signature,
 };
 
 pub mod container_stress;
 pub use container_stress::{
-    generate_container_stress_grid, ContainerStressConfig, ContainerStressMutator,
+    ContainerStressConfig, ContainerStressMutator, generate_container_stress_grid,
 };
 
 pub mod crash_index;
@@ -131,18 +138,18 @@ pub use mutation_budget::{BudgetReport, MutationBudget};
 
 pub mod seed_novelty;
 pub use seed_novelty::{
-    benchmark_novelty_discovery, DiscoveryBenchmark, NoveltyPrioritizer, SeedNoveltyCandidate,
+    DiscoveryBenchmark, NoveltyPrioritizer, SeedNoveltyCandidate, benchmark_novelty_discovery,
 };
 pub mod stale_detector;
 pub use stale_detector::{StaleDetectorConfig, StaleRunDetector, StaleStatus};
 
 pub mod worker_partition;
-pub use worker_partition::{worker_for_seed, WorkerPartition, WorkerPartitionError};
+pub use worker_partition::{WorkerPartition, WorkerPartitionError, worker_for_seed};
 
 pub mod run_control;
 pub use run_control::{
-    cancel_marker_path, cancel_requested, clear_cancel_request, default_state_dir, drive_run,
-    drive_run_partitioned, request_cancel_run, CancelSignal, RunId, RunSummary, RunTerminalState,
+    CancelSignal, RunId, RunSummary, RunTerminalState, cancel_marker_path, cancel_requested,
+    clear_cancel_request, default_state_dir, drive_run, drive_run_partitioned, request_cancel_run,
 };
 
 pub mod rpc_envelope;
@@ -150,7 +157,7 @@ pub use rpc_envelope::{RpcEnvelopeCapture, RpcRequestEnvelope, RpcResponseEnvelo
 
 pub mod stellar_address;
 pub use stellar_address::{
-    generate_address_vectors, AddressMutatorConfig, AddressType, StellarAddressMutator,
+    AddressMutatorConfig, AddressType, StellarAddressMutator, generate_address_vectors,
 };
 
 /// Wrapper for the legacy bit-flipper mutation logic.

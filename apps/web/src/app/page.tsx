@@ -1,63 +1,56 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import RunHistoryTable from "./implement-run-history-table-component";
-import RunHistoryTableSkeleton from "./RunHistoryTableSkeleton";
-import Pagination from "./Pagination";
-import CrashDetailDrawer from "./CrashDetailDrawer";
-import { FuzzingRun, RunStatus, RunArea, RunSeverity } from "./types";
-import ReportModal from "./ReportModal";
-import { generateMarkdownReport } from "./report-utils";
-import CreateRunHeatmapPage55 from "./create-run-heatmap-page-55";
-import AddRunComparisonCharts from "./add-run-comparison-charts";
-import AddTaggingAndLabelsUi from "./add-tagging-and-labels-ui";
-import AlertingSettingsPage54 from "./implement-alerting-settings-page-54";
-import AlertingSettingsPage from "./create-alerting-settings-page-page";
-import CrossRunBoardWidgets from "./implement-cross-run-board-widgets-component";
-import CrossRunBoardCustomWidgets from "./create-cross-run-board-custom-widgets-63";
-import RunClusterVisualization from "./add-run-cluster-visualization";
-import RunClusterOverview from "./add-run-cluster-overview";
-import ImplementRunWorkflowBoardPage58 from "./implement-run-workflow-board-page-58";
-import FailureClusterView from "./FailureClusterView";
-import MaintainerToggle from "./MaintainerToggle";
-import { useMaintainerMode } from "./useMaintainerMode";
-import AlertPresets from "./AlertPresets";
-import CreateReportingTemplatesPage60 from "./create-reporting-templates-page-60";
-import TimelineScrubber from "./implement-timeline-scrubber-component-component";
-import ColumnCustomization, { ColumnId } from "./add-column-customization";
-import IssueTriageBoard from "./add-issue-triage-board-ui";
-import CampaignMilestoneTimeline from "./campaign-milestone-timeline-55";
-import VirtualizedRunTable from "./implement-virtualized-run-table-component";
-import ReportingTemplatesManager from "./add-reporting-templates-manager";
-import AutomatedRegressionDeployIntegration from "./integrate-automated-regression-deploy-integration";
-import IntegrationTestHarnessForUIFlows from "./integrate-integration-test-harness-for-ui-flows";
-import ReportGenerator from "./add-report-generator";
-import WidgetLayoutEditor from "./implement-widget-layout-editor-component";
-import AddRunStatusTimeline from "./add-run-status-timeline";
-import AddExportRunJson from "./add-export-run-json";
-import AddExportRunCsv from "./add-export-run-csv";
-import IntegrateWebhookManagerForRunEvents from "./integrate-webhook-manager-for-run-events";
-import MetricsExportToPrometheus from "./integrate-metrics-export-to-prometheus";
-import LogViewer from "./implement-log-viewer-component";
-import AddAccessibleKeyboardNavBlueprint from "./add-accessible-keyboard-nav-blueprint";
-import ArtifactExplorer from "./add-artifact-explorer";
-import RunSeverityFilter from "./add-run-filtering-by-severity";
-import AddRunTimeline from "./add-run-timeline";
-import OnboardingChecklistModal from "./implement-onboarding-checklist-modal-component";
-import FailureClassificationTaxonomy from "./add-failure-classification-taxonomy";
-import AddAFuzzyQueryBuilderPage51 from "./add-a-fuzzy-query-builder-page-51";
-import AddResponsiveLayoutImprovements from "./add-responsive-layout-improvements";
-import AddKeyboardNavigationHelp from "./add-keyboard-navigation-help";
-import AddRunAnnotations from "./add-run-annotations";
+import Link from 'next/link';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import RunHistoryTable from './implement-run-history-table-component';
+import RunHistoryTableSkeleton from './RunHistoryTableSkeleton';
+import Pagination from './Pagination';
+import RunDetailModal from './implement-run-detail-modal-component';
+import { FuzzingRun, RunStatus, RunArea, RunSeverity } from './types';
+import ReportModal from './ReportModal';
+import { generateMarkdownReport } from './report-utils';
+import AddRunComparisonCharts from './add-run-comparison-charts';
+import AddRunComparison from './add-run-comparison';
+import AddTaggingAndLabelsUi from './add-tagging-and-labels-ui';
+import AlertingSettingsPage54 from './implement-alerting-settings-page-54';
+import AlertingSettingsPage from './create-alerting-settings-page-page';
+import CrossRunBoardWidgets from './implement-cross-run-board-widgets-component';
+import CrossRunBoardCustomWidgets from './create-cross-run-board-custom-widgets-63';
+import RunClusterVisualization from './add-run-cluster-visualization';
+import RunClusterOverview from './add-run-cluster-overview';
+import ImplementRunWorkflowBoardPage58 from './implement-run-workflow-board-page-58';
+import FailureClusterView from './FailureClusterView';
+import MaintainerToggle from './MaintainerToggle';
+import { useMaintainerMode } from './useMaintainerMode';
+import AlertPresets from './AlertPresets';
+import CreateReportingTemplatesPage60 from './create-reporting-templates-page-60';
+import TimelineScrubber from './implement-timeline-scrubber-component-component';
+import ColumnCustomization, { ColumnId } from './add-column-customization';
+import IssueTriageBoard from './add-issue-triage-board-ui';
+import CampaignMilestoneTimeline from './campaign-milestone-timeline-55';
+import VirtualizedRunTable from './implement-virtualized-run-table-component';
+import ReportingTemplatesManager from './add-reporting-templates-manager';
+import AutomatedRegressionDeployIntegration from './integrate-automated-regression-deploy-integration';
+import IntegrationTestHarnessForUIFlows from './integrate-integration-test-harness-for-ui-flows';
+import ReportGenerator from './add-report-generator';
+import WidgetLayoutEditor from './implement-widget-layout-editor-component';
+import AddRunStatusTimeline from './add-run-status-timeline';
+import AddExportRunJson from './add-export-run-json';
+import AddExportRunCsv from './add-export-run-csv';
+import IntegrateWebhookManagerForRunEvents from './integrate-webhook-manager-for-run-events';
+import MetricsExportToPrometheus from './integrate-metrics-export-to-prometheus';
+import LogViewer from './implement-log-viewer-component';
+import AddAccessibleKeyboardNavBlueprint from './add-accessible-keyboard-nav-blueprint';
+import ArtifactExplorer from './add-artifact-explorer';
+import RunSeverityFilter from './add-run-filtering-by-severity';
+import AddRunTimeline from './add-run-timeline';
+import OnboardingChecklistModal from './implement-onboarding-checklist-modal-component';
+import FailureClassificationTaxonomy from './add-failure-classification-taxonomy';
+import AddAFuzzyQueryBuilderPage51 from './add-a-fuzzy-query-builder-page-51';
+import AddResponsiveLayoutImprovements from './add-responsive-layout-improvements';
+import AddKeyboardNavigationHelp from './add-keyboard-navigation-help';
+import AddRunAnnotations from './add-run-annotations';
 
 // Mock data for demonstration
 const MOCK_RUNS: FuzzingRun[] = Array.from({ length: 25 }, (_, i) => ({
@@ -875,14 +868,17 @@ function HomeContent() {
             <AddRunComparisonCharts runs={filteredRuns} />
           </div>
 
-          <div className="mb-12 w-full">
-            <RunClusterVisualization
-              runs={filteredRuns}
-              onRunSelect={handleOpenRunDrawer}
-              showTimeline={true}
-              showMetrics={true}
-            />
-          </div>
+      <div className="mb-12 w-full">
+        <AddRunComparison runs={filteredRuns} />
+      </div>
+      <div className="mb-12 w-full">
+        <RunClusterVisualization 
+          runs={filteredRuns} 
+          onRunSelect={handleOpenRunDrawer}
+          showTimeline={true}
+          showMetrics={true}
+        />
+      </div>
 
           <div className="mb-12 w-full">
             <FailureClassificationTaxonomy runs={filteredRuns} />
@@ -1083,6 +1079,63 @@ function HomeContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {reportRun && (
+        <ReportModal
+          isOpen={true}
+          onClose={() => setReportRun(null)}
+          markdown={generateMarkdownReport(reportRun)}
+          runId={reportRun.id}
+        />
+      )}
+
+      <OnboardingChecklistModal
+        isOpen={showOnboardingChecklist}
+        onClose={handleCloseOnboardingChecklist}
+      />
+
+      {selectedRun && (
+        <RunDetailModal
+          isOpen={true}
+          run={selectedRun}
+          onClose={handleCloseRunDrawer}
+          onReplayComplete={handleReplayComplete}
+        />
+      )}
+
+      <div className="mb-12 w-full">
+        <MetricsExportToPrometheus />
+      </div>
+
+      <div className="mt-12 mb-16 w-full">
+        <IntegrateWebhookManagerForRunEvents />
+      </div>
+
+      <div className="mt-16 text-center border-t border-black/[.08] dark:border-white/[.145] pt-12 w-full">
+        <h2 className="text-2xl font-bold mb-4">Stellar Wave 3 is Open!</h2>
+        <p className="text-zinc-600 dark:text-zinc-400 mb-8 max-w-2xl mx-auto">
+          We are actively looking for contributors. Check out our open issues to build the future of Soroban dev tooling with us.
+        </p>
+        <div className="flex justify-center gap-4">
+          <a
+            href="https://github.com/SorobanCrashLab/soroban-crashlab/issues?q=is%3Aissue+is%3Aopen+label%3Awave3"
+            className="flex items-center justify-center h-12 px-6 rounded-full bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Browse Wave 3 Issues
+          </a>
+          <a
+            href="https://github.com/SorobanCrashLab/soroban-crashlab"
+            className="flex items-center justify-center h-12 px-6 rounded-full border border-black/[.15] dark:border-white/[.15] font-medium hover:bg-black/[.04] dark:hover:bg-white/[.04] transition dark:hover:text-black dark:text-white"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Star the Repo
+          </a>
+        </div>
+      </div>
       </div>
     </div>
   );
