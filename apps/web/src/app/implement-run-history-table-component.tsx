@@ -14,6 +14,12 @@ interface RunHistoryTableProps {
   onReplayRun?: (newRunData: { id: string; status: "running" }) => void;
   /** List of visible columns */
   visibleColumns?: string[];
+  /** Set of selected run IDs for bulk actions */
+  selectedRunIds?: Set<string>;
+  /** Called to toggle selection of a run */
+  onToggleRunSelection?: (runId: string) => void;
+  /** Called to toggle selection of all runs */
+  onToggleAllRunsSelection?: (runIds: string[]) => void;
 }
 
 const formatDuration = (ms: number): string => {
@@ -100,6 +106,9 @@ export default function EnhancedRunHistoryTable({
     "cpu",
     "actions",
   ],
+  selectedRunIds = new Set(),
+  onToggleRunSelection,
+  onToggleAllRunsSelection,
 }: RunHistoryTableProps) {
   const [sortField, setSortField] = useState<keyof FuzzingRun>("id");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -158,6 +167,27 @@ export default function EnhancedRunHistoryTable({
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-900">
+              {onToggleRunSelection && (
+                <th className="px-6 py-5 text-[10px] font-bold text-zinc-400 w-12">
+                  <div className="flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={runs.length > 0 && selectedRunIds.size === runs.length}
+                      ref={(input) => {
+                         if (input) {
+                           input.indeterminate = selectedRunIds.size > 0 && selectedRunIds.size < runs.length;
+                         }
+                      }}
+                      onChange={() => {
+                        if (onToggleAllRunsSelection) {
+                          onToggleAllRunsSelection(runs.map(r => r.id));
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                    />
+                  </div>
+                </th>
+              )}
               {visibleColumns.includes("id") && (
                 <th
                   className="px-6 py-5 text-[10px] font-bold text-zinc-400 uppercase tracking-widest cursor-pointer hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
@@ -213,9 +243,29 @@ export default function EnhancedRunHistoryTable({
             {sortedRuns.map((run) => (
               <tr
                 key={run.id}
-                className="group hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-all cursor-pointer"
-                onClick={() => onSelectRun(run.id)}
+                className={`group transition-all cursor-pointer ${
+                  selectedRunIds.has(run.id) 
+                    ? "bg-blue-50/80 dark:bg-blue-900/20" 
+                    : "hover:bg-blue-50/30 dark:hover:bg-blue-900/10"
+                }`}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).tagName.toLowerCase() !== 'input') {
+                     onSelectRun(run.id);
+                  }
+                }}
               >
+                {onToggleRunSelection && (
+                  <td className="px-6 py-5" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedRunIds.has(run.id)}
+                        onChange={() => onToggleRunSelection(run.id)}
+                        className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                      />
+                    </div>
+                  </td>
+                )}
                 {visibleColumns.includes("id") && (
                   <td className="px-6 py-5">
                     <div className="flex flex-col">
@@ -229,8 +279,8 @@ export default function EnhancedRunHistoryTable({
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
-                            title={`${run.annotations.length} annotations`}
                           >
+                            <title>{`${run.annotations.length} annotations`}</title>
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"

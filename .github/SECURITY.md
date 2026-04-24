@@ -38,26 +38,29 @@ A useful report includes:
 
 We follow a **coordinated disclosure** model. We ask reporters to keep details private until a fix is available or the 90-day window closes, whichever comes first. We will credit reporters in the advisory unless they prefer to remain anonymous.
 
-## Pre-Commit Secret Scanning Expectations
+## Maintainer Conflicts of Interest
 
-Contributors and maintainers are expected to scan changes for credentials before pushing a shared branch or opening a PR. This is a local safety check, not a replacement for private vulnerability reporting.
+Security trust depends on assignment, triage, review, merge, severity, and disclosure decisions being made by maintainers who can act independently.
+
+A maintainer has a conflict of interest when they are the reporter, author, assignee, PR author, employer, client, sponsor, close collaborator, direct financial beneficiary, direct competitor, or prior private implementer for the issue or PR under decision.
 
 ### Required control path
 
-1. Before the first push for a change and again after editing config files, environment examples, logs, fixtures, or copied command output, run at least one recommended local scanner.
-2. Recommended tools:
-   - `gitleaks detect --no-git --source .`
-   - `trufflehog filesystem --directory .`
-3. If a scanner flags a likely real secret, stop and do not push. Remove the value from the working tree and any local git history that already captured it (for example: amend, interactive rebase, or recommit after restore).
-4. If the value is a real credential, rotate or revoke it immediately, then review nearby files, shell history, logs, and generated artifacts for the same secret.
-5. If a suspected secret already reached a remote branch, pull request, or shared artifact, treat it as a security incident and report it through the private channels in this policy. Maintainers then follow the response timelines above.
-6. If a finding is a false positive, note the scanner name and file path in the PR or maintainer discussion without pasting the full matched value.
+1. The conflicted maintainer discloses the conflict before taking an assignment, review, merge, severity, fix-readiness, bounty, point-award, or disclosure decision.
+2. For public issues or PRs, disclose with a short public comment and avoid sensitive details. For private vulnerability reports, disclose only in the GitHub private vulnerability report or maintainer channel.
+3. An unconflicted maintainer takes ownership before the decision continues.
+4. The conflicted maintainer may provide factual context when requested, but must not approve, merge, assign, close, set severity, decide disclosure timing, or award resolution credit for the conflicted item.
+
+### Timelines
+
+- Issue assignment and PR review conflicts use the Wave maintainer timelines: replacement owner within **24 hours**, escalation to any available unconflicted maintainer at **36 hours**.
+- Security report conflicts keep the disclosure timelines in this policy: acknowledgement within **48 hours**, initial triage and severity assessment within **5 business days**, and fix or mitigation plan within **14 days**.
 
 ### Known risks and mitigation boundaries
 
-- Local secret scanning depends on contributor follow-through; the repository does not yet ship an enforced pre-commit hook. Mitigation: reviewers should ask which scanner was run when a PR touches config, logs, fixtures, or copied output.
-- Scanners can miss transformed, partial, or newly formatted secrets. Mitigation: contributors and maintainers should still review diffs manually around credentials, tokens, keys, and connection strings.
-- History cleanup in this repository reduces exposure here but does not revoke already-issued credentials or remove already-downloaded copies. Mitigation: always pair cleanup with rotation or revocation when the secret is real.
+- A small maintainer pool can delay replacement ownership. Mitigation: the Wave lead or any available unconflicted maintainer may take over at the escalation timer.
+- Private vulnerability reports can reveal sensitive details while a conflict is being handled. Mitigation: recusal records for private reports stay in private channels until coordinated disclosure.
+- This policy does not automatically detect personal, employment, financial, or sponsor relationships. Mitigation: maintainers must self-disclose, contributors should flag known conflicts, and reviewers can request reassignment when independence is unclear.
 
 ## Scope
 

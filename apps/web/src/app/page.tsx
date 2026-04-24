@@ -59,6 +59,8 @@ import AddResponsiveLayoutImprovements from "./add-responsive-layout-improvement
 import AddKeyboardNavigationHelp from "./add-keyboard-navigation-help";
 import AddRunAnnotations from "./add-run-annotations";
 import NotificationCenter from "./add-notification-center-ui";
+import BulkActionsForRuns, { BulkAction } from "./add-bulk-actions-for-runs";
+import AddDownloadableRunArtifactBundle from "./add-downloadable-run-artifact-bundle";
 
 // Mock data for demonstration
 const MOCK_RUNS: FuzzingRun[] = Array.from({ length: 25 }, (_, i) => ({
@@ -158,6 +160,48 @@ function HomeContent() {
     "seedCount",
     "report",
   ]);
+  const [selectedRunIds, setSelectedRunIds] = useState<Set<string>>(new Set());
+
+  const handleToggleRunSelection = useCallback((runId: string) => {
+    setSelectedRunIds(prev => {
+      const next = new Set(prev);
+      if (next.has(runId)) {
+        next.delete(runId);
+      } else {
+        next.add(runId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleToggleAllRunsSelection = useCallback((runIds: string[]) => {
+    setSelectedRunIds(prev => {
+      if (prev.size === runIds.length && runIds.every(id => prev.has(id))) {
+        return new Set();
+      }
+      return new Set(runIds);
+    });
+  }, []);
+
+  const handleBulkAction = useCallback((action: BulkAction, runIds: string[], data?: Record<string, unknown>) => {
+    console.log("Applying bulk action:", action, "on runs:", runIds, data);
+    // Dummy action handling for now, would typically trigger API calls
+    if (action === "delete") {
+       setRuns(prev => prev.filter(r => !runIds.includes(r.id)));
+       setSelectedRunIds(new Set());
+    } else if (action === "cancel") {
+       setRuns(prev => prev.map(r => runIds.includes(r.id) ? { ...r, status: "cancelled" } : r));
+    } else if (action === "retry") {
+       setRuns(prev => prev.map(r => runIds.includes(r.id) ? { ...r, status: "running" } : r));
+    }
+    // Clear selection after action in most cases unless it's a non-mutating action
+    if (["export"].includes(action)) return;
+    setSelectedRunIds(new Set());
+  }, []);
+
+  const selectedRuns = useMemo(() => {
+    return runs.filter((run) => selectedRunIds.has(run.id));
+  }, [runs, selectedRunIds]);
 
   const selectedRunId = searchParams.get("run");
   const statusFilter = STATUS_OPTIONS.includes(
@@ -523,7 +567,12 @@ function HomeContent() {
           {/* Cross-run board widgets section — maintainer only */}
           {isMaintainer && (
             <div className="w-full mb-12">
-              <CrossRunBoardWidgets />
+              <CrossRunBoardWidgets 
+                runs={runs}
+                dataState={dataState}
+                onRetry={() => setFetchAttempt(prev => prev + 1)}
+                errorMessage="Failed to load cross-run statistics. Please try again."
+              />
               <CrossRunBoardCustomWidgets runs={runs} />
             </div>
           )}
@@ -751,10 +800,20 @@ function HomeContent() {
             )}
             <div className="mb-8 w-full">
               <CampaignMilestoneTimeline
+                runs={runs}
+                dataState={dataState}
+                onRetry={() => setFetchAttempt((n) => n + 1)}
                 campaignId="campaign-001"
                 autoUpdateInterval={5000}
                 maxEventsDisplayed={10}
               />
+            </div>
+            <div className="mb-4">
+               <BulkActionsForRuns 
+                 selectedRuns={selectedRuns}
+                 onAction={handleBulkAction}
+                 onClearSelection={() => setSelectedRunIds(new Set())}
+               />
             </div>
             <RunHistoryTable
               runs={paginatedRuns}
@@ -762,6 +821,9 @@ function HomeContent() {
               onViewReport={setReportRun}
               onReplayRun={handleReplayComplete}
               visibleColumns={visibleColumns}
+              selectedRunIds={selectedRunIds}
+              onToggleRunSelection={handleToggleRunSelection}
+              onToggleAllRunsSelection={handleToggleAllRunsSelection}
             />
             {dataState === "loading" && (
               <RunHistoryTableSkeleton rows={ITEMS_PER_PAGE} />
@@ -873,6 +935,10 @@ function HomeContent() {
           <div className="mb-12 w-full grid grid-cols-1 md:grid-cols-2 gap-8">
             <AddExportRunJson runs={filteredRuns} />
             <AddExportRunCsv runs={filteredRuns} />
+          </div>
+
+          <div className="mb-12 w-full">
+            <AddDownloadableRunArtifactBundle runs={selectedRuns.length > 0 ? selectedRuns : filteredRuns} />
           </div>
 
           <div className="mb-12 w-full">

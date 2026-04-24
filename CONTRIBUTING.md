@@ -252,27 +252,13 @@ Also paste the exact failing command and the first relevant error block.
    release maintainer can update [`CHANGELOG.md`](CHANGELOG.md) and run the
    compatibility review in [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md).
 
-## Pre-commit secret scanning
+## Conflict of interest disclosures
 
-Before the first push for a change, and again after editing config files,
-environment examples, logs, fixtures, or copied command output, run at least
-one recommended local scanner:
+If you know that an issue assignment, PR review, merge, security triage, or resolution-credit decision involves a maintainer with a personal, employment, sponsor, financial, close-collaboration, direct-competition, or prior private implementation conflict, flag it early.
 
-```bash
-gitleaks detect --no-git --source .
-trufflehog filesystem --directory .
-```
-
-If a scanner reports a likely real secret:
-
-- Do not push the branch yet.
-- Remove the value from the working tree and any local git history that already captured it.
-- Rotate or revoke the credential if it is real.
-- Review nearby files, shell history, logs, and generated artifacts for the same value.
-- If the secret already reached a remote branch, PR, or shared artifact, switch to the private reporting path in [`.github/SECURITY.md`](.github/SECURITY.md) instead of continuing in public.
-
-If a finding is a false positive, note the scanner name and file path for the
-maintainer without pasting the full matched value into the PR.
+- For normal issues and PRs, leave a concise public comment asking for an unconflicted maintainer.
+- For private vulnerability reports, keep details in GitHub private vulnerability reporting or maintainer email. Do not move sensitive security details into a public issue or PR.
+- A conflicted maintainer may provide factual context when asked, but an unconflicted maintainer must own assignment, review approval, merge, severity, disclosure timing, and credit decisions.
 
 ## Quality bar
 
